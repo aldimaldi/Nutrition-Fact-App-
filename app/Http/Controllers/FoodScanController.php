@@ -4,17 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessFoodPhotoJob;
 use App\Models\FoodLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FoodScanController extends Controller
 {
     /**
+     * GET /dashboard
+     * Menampilkan halaman utama (dashboard) beserta log makanan.
+     */
+    public function dashboard() // <--- NAMA FUNGSI DIUBAH MENJADI dashboard()
+    {
+        $user = Auth::user();
+
+        // 1. Data Koleksi Lengkap: Digunakan KHUSUS untuk kalkulasi gizi harian di Blade
+        $todayAllLogs = $user->foodLogs()
+            ->whereDate('eaten_at', Carbon::today())
+            ->get();
+
+        // 2. Data Terpisah untuk Tampilan: Digunakan KHUSUS untuk daftar riwayat (list)
+        // Kita memotongnya menjadi 5 item per halaman dengan paginate(5)
+        $foodLogsList = $user->foodLogs()
+            ->whereDate('eaten_at', Carbon::today())
+            ->latest('eaten_at')
+            ->paginate(5);
+
+        return view('dashboard', [
+            'character'    => $user->character,
+            'target'       => $user->nutritionTarget,
+            'todayLogs'    => $todayAllLogs,   
+            'foodLogsList' => $foodLogsList,   
+        ]);
+    }
+
+    /**
      * POST /food-logs/scan
      * multipart/form-data: photo (file)
-     *
-     * Hanya menyimpan foto & membuat record berstatus "processing",
-     * lalu melempar job ke queue. Response langsung balik tanpa menunggu Gemini.
      */
     public function store(Request $request)
     {
@@ -56,14 +82,15 @@ class FoodScanController extends Controller
 
     /**
      * GET /food-logs
-     * Riwayat log makanan user, terbaru dulu
+     * Riwayat log makanan user, terbaru dulu (Khusus respons JSON API)
      */
     public function index(Request $request)
     {
+        // Ambil data log, urutkan dari yang terbaru, dan batasi 10 item per halaman
         $logs = FoodLog::where('user_id', Auth::id())
             ->orderByDesc('eaten_at')
-            ->paginate(20);
+            ->paginate(10);
 
-        return response()->json($logs);
+        return view('foodLogs', compact('logs'));
     }
 }

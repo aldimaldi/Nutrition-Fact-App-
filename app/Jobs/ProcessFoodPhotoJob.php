@@ -31,10 +31,34 @@ class ProcessFoodPhotoJob implements ShouldQueue
             $absolutePath = storage_path('app/public/' . $log->photo_path);
             $nutrition = $gemini->analyzeFoodPhoto($absolutePath);
 
-            $character = $user->character;
-            $target = $user->nutritionTarget;
+            $character = $user->character ?? \App\Models\Character::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'level' => 1,
+                    'hp' => 100,
+                    'hp_max' => 100,
+                    'xp' => 0,
+                    'xp_to_next_level' => 100,
+                    'status' => 'healthy'
+                ]
+            );
 
-            $todayTotals = FoodLog::where('user_id', $user->id)
+            // PENYEMBUH BUG: Jika target nutrisi belum ada, buatkan target default 2000 Kalori
+            $target = $user->nutritionTarget ?? \App\Models\NutritionTarget::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'calories' => 2000,
+                    'protein_g' => 60,
+                    'carbs_g' => 250,
+                    'fat_g' => 60,
+                    'fiber_g' => 30,
+                    'sugar_g' => 50,
+                    'sodium_mg' => 2000
+                ]
+            );
+
+            $todayTotals = FoodLog::query()
+                ->where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->whereDate('eaten_at', $log->eaten_at->toDateString())
                 ->where('id', '!=', $log->id)

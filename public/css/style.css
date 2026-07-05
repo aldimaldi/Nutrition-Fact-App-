@@ -187,3 +187,198 @@ a.nav-item:hover:not(.active), .nav-item-div:hover { background: #faf7fb; }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* =========================================================
+   NutriQuest — Character Interactive Animations
+   Tempel di dalam <style> dashboard, atau import sebagai file terpisah.
+   Kompatibel dengan ketiga avatar (cat/bear/bunny) karena
+   ditarget lewat class bersama: char-ear-left/right, char-eye
+   ========================================================= */
+
+.character-avatar-wrap{
+  cursor:pointer;
+  display:inline-block;
+  position:relative;
+  z-index:2;
+  outline:none;
+  /* idle: napas pelan + sedikit miring, looping terus */
+  animation: nq-idle-float 3.2s ease-in-out infinite;
+  transform-origin:center bottom;
+}
+.character-avatar-wrap:focus-visible{
+  filter:drop-shadow(0 0 0 3px var(--orange));
+}
+
+@keyframes nq-idle-float{
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(-1.5deg); }
+}
+
+/* kuping goyang pelan, kiri & kanan berlawanan arah biar natural */
+.char-ear-left{
+  animation: nq-ear-wiggle 2.6s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.char-ear-right{
+  animation: nq-ear-wiggle 2.6s ease-in-out infinite reverse;
+  transform-origin: bottom center;
+}
+@keyframes nq-ear-wiggle{
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(4deg); }
+}
+
+/* kedip mata berkala, delay beda tipis biar tidak kaku */
+.char-eye{
+  animation: nq-blink 4.5s ease-in-out infinite;
+  transform-origin:center;
+}
+.char-eye:nth-of-type(2){ animation-delay: .12s; }
+
+@keyframes nq-blink{
+  0%, 96%, 100% { transform: scaleY(1); }
+  98%           { transform: scaleY(.1); }
+}
+
+/* ---------- sentuh / klik karakter ---------- */
+.character-avatar-wrap.poked{
+  animation: nq-poke 0.5s ease-in-out;
+}
+@keyframes nq-poke{
+  0%   { transform: scale(1,1); }
+  30%  { transform: scale(1.15,.85) translateY(4px); }
+  55%  { transform: scale(.92,1.08) translateY(-6px); }
+  75%  { transform: scale(1.05,.96); }
+  100% { transform: scale(1,1); }
+}
+
+/* balon ucapan kecil saat disentuh */
+.speech-bubble{
+  position:absolute;
+  top:14%;
+  left:50%;
+  transform:translateX(-50%) scale(.85);
+  background:#fff;
+  color:var(--ink);
+  font-family:'Baloo 2',cursive;
+  font-weight:700;
+  font-size:13px;
+  padding:8px 14px;
+  border-radius:14px;
+  opacity:0;
+  pointer-events:none;
+  z-index:5;
+  white-space:nowrap;
+  box-shadow:0 8px 18px -8px rgba(0,0,0,.25);
+  transition:opacity .2s ease, transform .2s ease;
+}
+.speech-bubble::after{
+  content:'';
+  position:absolute;
+  bottom:-6px;left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:#fff;
+}
+.speech-bubble.show{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+
+/* ---------- glow saat merayakan (celebrate) ---------- */
+.char-glow{
+  position:absolute;
+  top:38%;left:50%;
+  width:200px;height:200px;
+  transform:translate(-50%,-50%) scale(.6);
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,201,60,.55) 0%, rgba(255,201,60,0) 70%);
+  opacity:0;
+  pointer-events:none;
+  z-index:1;
+}
+.char-glow.celebrate{
+  animation: nq-glow-pulse .9s ease-out;
+}
+@keyframes nq-glow-pulse{
+  0%   { opacity:0;  transform:translate(-50%,-50%) scale(.5); }
+  40%  { opacity:1;  transform:translate(-50%,-50%) scale(1.15); }
+  100% { opacity:0;  transform:translate(-50%,-50%) scale(1.4); }
+}
+
+/* lompat + sedikit rotasi saat scan berhasil */
+.character-avatar-wrap.celebrating{
+  animation: nq-celebrate-jump .9s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes nq-celebrate-jump{
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  25%  { transform: translateY(-30px) scale(1.05) rotate(-6deg); }
+  50%  { transform: translateY(-42px) scale(1.08) rotate(6deg); }
+  75%  { transform: translateY(-10px) scale(1.02) rotate(-3deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* level-up: versi lebih besar/megah dari celebrate biasa */
+.character-avatar-wrap.leveling-up{
+  animation: nq-levelup-spin 1.2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes nq-levelup-spin{
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  30%  { transform: translateY(-46px) scale(1.15) rotate(10deg); }
+  55%  { transform: translateY(-55px) scale(1.2) rotate(-10deg); }
+  80%  { transform: translateY(-14px) scale(1.05) rotate(4deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+/* ---------- lapisan partikel & angka melayang ---------- */
+.float-layer{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:6;
+  overflow:visible;
+}
+
+/* partikel hati saat disentuh, sparkle saat celebrate — dibuat dinamis via JS,
+   class nq-particle dipakai bersama, warna/ikon beda lewat inline style/emoji */
+.nq-particle{
+  position:absolute;
+  font-size:18px;
+  opacity:1;
+  will-change:transform, opacity;
+  animation: nq-float-up 1s ease-out forwards;
+}
+@keyframes nq-float-up{
+  0%   { transform: translate(0,0) scale(.6) rotate(0deg); opacity:1; }
+  100% { transform: translate(var(--tx,0px), var(--ty,-70px)) scale(1.1) rotate(var(--tr,20deg)); opacity:0; }
+}
+
+/* teks +XP / HP melayang setelah scan berhasil */
+.nq-float-stat{
+  position:absolute;
+  top:8%;
+  left:50%;
+  transform:translateX(-50%);
+  font-family:'Baloo 2',cursive;
+  font-weight:700;
+  font-size:16px;
+  white-space:nowrap;
+  animation: nq-stat-rise 1.4s ease-out forwards;
+}
+.nq-float-stat.xp{ color: var(--orange-deep, #e8712a); }
+.nq-float-stat.hp-up{ color:#227a4a; }
+.nq-float-stat.hp-down{ color:#c0392b; }
+
+@keyframes nq-stat-rise{
+  0%   { transform: translate(-50%, 0);   opacity:0; }
+  15%  { opacity:1; }
+  100% { transform: translate(-50%, -60px); opacity:0; }
+}
+
+/* hormati preferensi pengguna yang mematikan animasi */
+@media (prefers-reduced-motion: reduce){
+  .character-avatar-wrap,
+  .char-ear-left, .char-ear-right, .char-eye{
+    animation: none !important;
+  }
+}

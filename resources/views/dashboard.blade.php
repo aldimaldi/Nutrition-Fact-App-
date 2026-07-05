@@ -38,7 +38,7 @@
 
       <section class="stat-card">
         <div>
-          <div class="level-badge">Lv. {{ $character->level ?? 1 }}</div>
+          <div class="level-badge" id="levelBadge" data-level="{{ $character->level }}">Lv. {{ $character->level }}</div>
           <div class="status-chip">Active</div>
         </div>
 
@@ -113,68 +113,84 @@
             elseif($avatarType === 'bear') $emoji = '🐻';
         @endphp
 
-        <div class="character-panel">
+        {{--
+          Tambahan dari versi Anda:
+          - <div id="characterAvatar" class="character-avatar-wrap"> membungkus SVG -> target animasi idle/poke/celebrate
+          - <div class="char-glow"></div> -> lingkaran cahaya, menyala saat "celebrating"
+          - <div class="speech-bubble" id="charSpeechBubble"></div> -> reaksi lucu saat disentuh
+          - <div class="float-layer" id="charFloatLayer"></div> -> tempat munculnya partikel/angka XP-HP melayang
+          - Setiap SVG (cat/bear/bunny) ditambah class bersama: char-ear-left, char-ear-right, char-eye
+            supaya satu set @keyframes CSS bisa dipakai untuk ketiga karakter sekaligus.
+        --}}
+        <div class="character-panel" id="characterPanel">
           <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
-          
+
           <div class="char-name-tag">{{ $emoji }} {{ $charName }}</div>
 
-          @if($avatarType === 'cat')
-            <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
-              <path d="M30 80 Q50 20 85 60 Z" fill="#ffbda3"/>
-              <path d="M180 80 Q160 20 125 60 Z" fill="#ffbda3"/>
-              <path d="M42 75 Q55 35 75 62 Z" fill="#ffe1d4"/>
-              <path d="M168 75 Q155 35 135 62 Z" fill="#ffe1d4"/>
-              <circle cx="105" cy="130" r="80" fill="#ffbda3"/>
-              <path d="M35 130 a70 70 0 0 0 140 0 z" fill="#ffffff" opacity=".9"/>
-              <circle cx="78" cy="118" r="9" fill="#523940"/>
-              <circle cx="132" cy="118" r="9" fill="#523940"/>
-              <ellipse cx="55" cy="135" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <ellipse cx="155" cy="135" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <ellipse cx="105" cy="135" rx="7" ry="5" fill="#f4a9be"/>
-              <path d="M90 142 Q97 152 105 142 Q112 152 120 142" stroke="#523940" stroke-width="3" fill="none" stroke-linecap="round"/>
-              <line x1="25" y1="120" x2="50" y2="125" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-              <line x1="20" y1="135" x2="45" y2="135" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-              <line x1="185" y1="120" x2="160" y2="125" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-              <line x1="190" y1="135" x2="165" y2="135" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-            </svg>
+          <div class="char-glow" id="charGlow"></div>
+          <div class="speech-bubble" id="charSpeechBubble"></div>
+          <div class="float-layer" id="charFloatLayer"></div>
 
-          @elseif($avatarType === 'bear')
-            <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
-              <circle cx="45" cy="70" r="28" fill="#d4a373"/>
-              <circle cx="45" cy="70" r="16" fill="#faedcd"/>
-              <circle cx="165" cy="70" r="28" fill="#d4a373"/>
-              <circle cx="165" cy="70" r="16" fill="#faedcd"/>
-              <circle cx="105" cy="130" r="80" fill="#d4a373"/>
-              <circle cx="75" cy="110" r="8" fill="#4a3728"/>
-              <circle cx="135" cy="110" r="8" fill="#4a3728"/>
-              <ellipse cx="55" cy="125" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <ellipse cx="155" cy="125" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <ellipse cx="105" cy="145" rx="30" ry="24" fill="#faedcd"/>
-              <ellipse cx="105" cy="136" rx="12" ry="7" fill="#4a3728"/>
-              <path d="M105 143 L105 155" stroke="#4a3728" stroke-width="3" stroke-linecap="round"/>
-              <path d="M92 153 Q105 165 118 153" stroke="#4a3728" stroke-width="3" fill="none" stroke-linecap="round"/>
-            </svg>
+          <div class="character-avatar-wrap" id="characterAvatar" data-avatar="{{ $avatarType }}" tabindex="0" role="button" aria-label="Sentuh karakter">
 
-          @else
-            <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
-              <path d="M62 30 Q50 -10 78 5 Q95 55 88 95 Z" fill="#f6c9d6"/>
-              <path d="M148 30 Q160 -10 132 5 Q115 55 122 95 Z" fill="#f6c9d6"/>
-              <path d="M70 34 Q62 4 80 12 Q92 50 87 82 Z" fill="#fbe1e9"/>
-              <path d="M140 34 Q148 4 130 12 Q118 50 123 82 Z" fill="#fbe1e9"/>
-              <circle cx="105" cy="130" r="80" fill="#f6c9d6"/>
-              <path d="M35 130 a70 70 0 0 0 140 0 z" fill="#ffffff" opacity=".9"/>
-              <circle cx="78" cy="118" r="9" fill="#e0355f"/>
-              <circle cx="132" cy="118" r="9" fill="#e0355f"/>
-              <ellipse cx="105" cy="140" rx="7" ry="5" fill="#c22a4f"/>
-              <path d="M92 152 Q105 162 118 152" stroke="#c22a4f" stroke-width="3" fill="none" stroke-linecap="round"/>
-              <ellipse cx="55" cy="140" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <ellipse cx="155" cy="140" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
-              <circle cx="167" cy="172" r="10" fill="#fbe1e9"/>
-            </svg>
-          @endif
+            @if($avatarType === 'cat')
+              <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
+                <path class="char-ear-left" d="M30 80 Q50 20 85 60 Z" fill="#ffbda3"/>
+                <path class="char-ear-right" d="M180 80 Q160 20 125 60 Z" fill="#ffbda3"/>
+                <path d="M42 75 Q55 35 75 62 Z" fill="#ffe1d4"/>
+                <path d="M168 75 Q155 35 135 62 Z" fill="#ffe1d4"/>
+                <circle cx="105" cy="130" r="80" fill="#ffbda3"/>
+                <path d="M35 130 a70 70 0 0 0 140 0 z" fill="#ffffff" opacity=".9"/>
+                <circle class="char-eye" cx="78" cy="118" r="9" fill="#523940"/>
+                <circle class="char-eye" cx="132" cy="118" r="9" fill="#523940"/>
+                <ellipse cx="55" cy="135" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <ellipse cx="155" cy="135" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <ellipse cx="105" cy="135" rx="7" ry="5" fill="#f4a9be"/>
+                <path d="M90 142 Q97 152 105 142 Q112 152 120 142" stroke="#523940" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="25" y1="120" x2="50" y2="125" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                <line x1="20" y1="135" x2="45" y2="135" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                <line x1="185" y1="120" x2="160" y2="125" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                <line x1="190" y1="135" x2="165" y2="135" stroke="#523940" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+              </svg>
+
+            @elseif($avatarType === 'bear')
+              <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
+                <circle class="char-ear-left" cx="45" cy="70" r="28" fill="#d4a373"/>
+                <circle cx="45" cy="70" r="16" fill="#faedcd"/>
+                <circle class="char-ear-right" cx="165" cy="70" r="28" fill="#d4a373"/>
+                <circle cx="165" cy="70" r="16" fill="#faedcd"/>
+                <circle cx="105" cy="130" r="80" fill="#d4a373"/>
+                <circle class="char-eye" cx="75" cy="110" r="8" fill="#4a3728"/>
+                <circle class="char-eye" cx="135" cy="110" r="8" fill="#4a3728"/>
+                <ellipse cx="55" cy="125" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <ellipse cx="155" cy="125" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <ellipse cx="105" cy="145" rx="30" ry="24" fill="#faedcd"/>
+                <ellipse cx="105" cy="136" rx="12" ry="7" fill="#4a3728"/>
+                <path d="M105 143 L105 155" stroke="#4a3728" stroke-width="3" stroke-linecap="round"/>
+                <path d="M92 153 Q105 165 118 153" stroke="#4a3728" stroke-width="3" fill="none" stroke-linecap="round"/>
+              </svg>
+
+            @else
+              <svg class="bunny" viewBox="0 0 210 230" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="105" cy="216" rx="70" ry="8" fill="rgba(0,0,0,.12)"/>
+                <path class="char-ear-left" d="M62 30 Q50 -10 78 5 Q95 55 88 95 Z" fill="#f6c9d6"/>
+                <path class="char-ear-right" d="M148 30 Q160 -10 132 5 Q115 55 122 95 Z" fill="#f6c9d6"/>
+                <path d="M70 34 Q62 4 80 12 Q92 50 87 82 Z" fill="#fbe1e9"/>
+                <path d="M140 34 Q148 4 130 12 Q118 50 123 82 Z" fill="#fbe1e9"/>
+                <circle cx="105" cy="130" r="80" fill="#f6c9d6"/>
+                <path d="M35 130 a70 70 0 0 0 140 0 z" fill="#ffffff" opacity=".9"/>
+                <circle class="char-eye" cx="78" cy="118" r="9" fill="#e0355f"/>
+                <circle class="char-eye" cx="132" cy="118" r="9" fill="#e0355f"/>
+                <ellipse cx="105" cy="140" rx="7" ry="5" fill="#c22a4f"/>
+                <path d="M92 152 Q105 162 118 152" stroke="#c22a4f" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <ellipse cx="55" cy="140" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <ellipse cx="155" cy="140" rx="8" ry="5" fill="#f4a9be" opacity=".8"/>
+                <circle cx="167" cy="172" r="10" fill="#fbe1e9"/>
+              </svg>
+            @endif
+          </div>
         </div>
 
         <div class="side-panel">
@@ -241,6 +257,12 @@ const uploadBtn = document.getElementById('uploadBtn');
 const fileInput = document.getElementById('foodPhotoInput');
 const loadingOverlay = document.getElementById('loadingOverlay');
 
+// Ambil level karakter saat ini SEBELUM proses scan dimulai,
+// supaya nanti bisa dibandingkan untuk deteksi "naik level atau tidak".
+// levelBadge butuh atribut data-level -> lihat catatan di bawah.
+const levelBadge = document.getElementById('levelBadge');
+let previousLevel = levelBadge ? parseInt(levelBadge.dataset.level, 10) : 0;
+
 // Memicu klik pada input file ketika tombol ditekan
 uploadBtn.addEventListener('click', () => {
   fileInput.click();
@@ -260,7 +282,7 @@ fileInput.addEventListener('change', async (e) => {
   try {
       const res = await fetch('/food-logs/scan', {
         method: 'POST',
-        headers: { 
+        headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
         },
@@ -268,7 +290,7 @@ fileInput.addEventListener('change', async (e) => {
       });
 
       const data = await res.json();
-      
+
       // Jika berhasil di-queue, mulai polling untuk melihat statusnya
       if(data.food_log && data.food_log.id) {
           console.log('Gambar terkirim, memulai proses pemindaian...');
@@ -294,11 +316,28 @@ function pollFoodLog(id) {
 
         if (data.food_log.status === 'completed') {
           clearInterval(interval);
-          // Halaman dimuat ulang otomatis, ini akan mereset tampilan dan loading akan hilang
-          window.location.reload();
+
+          // 2. SEMBUNYIKAN LOADING DULU, biar karakter yang beraksi kelihatan
+          loadingOverlay.style.display = 'none';
+
+          const leveledUp = data.character.level > previousLevel;
+
+          // 3. MAINKAN ANIMASI KARAKTER
+          if (window.NutriCharacter) {
+            window.NutriCharacter.celebrate({
+              xpEarned: data.food_log.xp_earned,
+              hpDelta: data.food_log.hp_delta,
+              leveledUp: leveledUp,
+            });
+          }
+
+          // 4. Reload SETELAH animasi selesai main, bukan langsung.
+          //    Kasih jeda lebih lama kalau level up biar animasinya kelihatan utuh.
+          setTimeout(() => window.location.reload(), leveledUp ? 1700 : 1200);
+
         } else if (data.food_log.status === 'failed') {
           clearInterval(interval);
-          // 2. SEMBUNYIKAN LOADING SCREEN JIKA AI GAGAL
+          // SEMBUNYIKAN LOADING SCREEN JIKA AI GAGAL
           loadingOverlay.style.display = 'none';
           alert('Gagal menganalisis foto, coba foto yang lebih jelas.');
         }
